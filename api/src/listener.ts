@@ -41,6 +41,8 @@ const unwatch = publicClient.watchContractEvent({
   onError: (error) => {
     console.error("watchContractEvent error:", error);
   },
+  pollingInterval: 10_000,
+  poll: true,
 });
 
 process.on("exit", () => {
