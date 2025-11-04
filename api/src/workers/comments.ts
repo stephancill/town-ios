@@ -7,7 +7,7 @@ import { cacheUserData, fetchCachedComment } from "../lib/ecp";
 import { sanitizeNotificationData } from "../lib/notifications";
 import { notificationsQueue } from "../lib/queue";
 import { redisQueue } from "../lib/redis";
-import { getCommentAuthorUsername } from "../lib/utils";
+import { formatCommentContent, getCommentAuthorUsername } from "../lib/utils";
 import { CommentJobData } from "../types/jobs";
 
 export const commentWorker = new Worker<CommentJobData>(
@@ -60,7 +60,10 @@ export const commentWorker = new Worker<CommentJobData>(
             title: `${
               comment.content === "like" ? "liked" : "reaction"
             } by @${authorUsername} `,
-            body: parentComment.content,
+            body: formatCommentContent({
+              content: parentComment.content,
+              references: parentComment.references || [],
+            }),
             data: {
               type: comment.content === "like" ? "reaction" : "reaction",
               reactionType:
@@ -86,7 +89,10 @@ export const commentWorker = new Worker<CommentJobData>(
           author: parentComment.author.address,
           notification: sanitizeNotificationData({
             title: `reply from @${authorUsername}`,
-            body: comment.content,
+            body: formatCommentContent({
+              content: comment.content,
+              references: comment.references || [],
+            }),
             data: {
               type: "reply",
               commentId: comment.id,
@@ -118,7 +124,10 @@ export const commentWorker = new Worker<CommentJobData>(
         author: address,
         notification: sanitizeNotificationData({
           title: `@${authorUsername} mentioned you`,
-          body: comment.content,
+          body: formatCommentContent({
+            content: comment.content,
+            references: comment.references || [],
+          }),
           data: {
             type: "mention",
             commentId: comment.id,
@@ -160,7 +169,10 @@ export const commentWorker = new Worker<CommentJobData>(
             targetUserIds: uniqueUserIds,
             notification: sanitizeNotificationData({
               title: `@${authorUsername} posted`,
-              body: comment.content,
+              body: formatCommentContent({
+                content: comment.content,
+                references: comment.references || [],
+              }),
               data: {
                 type: "post",
                 commentId: comment.id,
